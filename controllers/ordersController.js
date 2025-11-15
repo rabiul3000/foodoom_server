@@ -1,0 +1,111 @@
+import Food from "../models/Food.js";
+import Order from "../models/Order.js"; // import your Order model
+
+export const createSingleOrder = async (req, res) => {
+  try {
+    const userId = req.user.user_id; // Firebase UID (from verified token)
+    const { cart } = req.body;
+
+    if (!cart || !Array.isArray(cart) || cart.length === 0) {
+      return res.status(400).json({ message: "Cart cannot be empty" });
+    }
+
+    // 🧮 Calculate total server-side (secure)
+    const totalAmount = cart.reduce(
+      (sum, item) => sum + item.unit_price * item.piece,
+      0
+    );
+
+    // 🧩 Build structured cartItems for DB
+    const cartItems = cart.map((item) => ({
+      foodId: item._id,
+      name: item.name,
+      quantity: item.piece,
+      unit_price: item.unit_price,
+      total_price: item.unit_price * item.piece,
+      image: item.image,
+      piece: item.piece,
+    }));
+
+    // 🕒 Create expiration time (auto-delete unpaid orders)
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 mins from now
+
+    // 💾 Create and save new order
+    const newOrder = new Order({
+      userId,
+      cartItems,
+      totalAmount,
+      paymentStatus: "unpaid",
+      orderStatus: "pending",
+      expiresAt,
+    });
+
+    await newOrder.save();
+
+    // ✅ Send success response
+    res.status(201).json({
+      success: true,
+      message: "Order created successfully",
+      order: newOrder,
+    });
+  } catch (err) {
+    console.error("❌ Error creating order:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const getAllOrders = async (req, res) => {
+  const userId = req.params.userId;
+  console.log(userId);
+  try {
+    const orders = await Order.find({ userId }).sort({ createdAt: -1 });
+    return res.status(200).json(orders);
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+export const getSingleOrder = async (req, res) => {
+  const foodId = req.params.id;
+  try {
+    const food = await Food.findById(foodId);
+    if (!food) return res.status(404).json({ message: "Food not found" });
+    return res.status(200).json(food);
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+export const updateSingleOrder = async (req, res) => {
+  const foodId = req.params.id;
+  try {
+    const food = await Food.findById(foodId);
+    if (!food) return res.status(404).json({ message: "Food not found" });
+    res.json(food);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const deleteSingleOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    if (!orderId) {
+      return res.status(400).json({ message: "Order ID is required" });
+    }
+
+    const deletedOrder = await Order.findByIdAndDelete(orderId);
+
+    if (!deletedOrder) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Success response
+    res.status(200).json({
+      deletedOrder,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
