@@ -2,6 +2,7 @@ import Order from "../models/Order.js";
 import SSLCommerzPayment from "sslcommerz-lts";
 import User from "../models/User.js";
 import admin from "../config/firebaseAdmin.js";
+import { clientURL, CURRENT_SERVER_URL } from "../constants.js";
 
 export const paySingleOrder = async (req, res) => {
   const orderId = req.body.orderId;
@@ -18,10 +19,10 @@ export const paySingleOrder = async (req, res) => {
     tran_id: crypto.randomUUID(),
 
     // Payment callback URLs
-    success_url: `http://localhost:5000/payments/success?orderId=${order._id}`,
-    fail_url: `http://localhost:5000/payments/fail?orderId=${order._id}`,
-    cancel_url: `http://localhost:5000/payments/cancel?orderId=${order._id}`,
-    ipn_url: "http://localhost:5000/payments/ipn",
+    success_url: `${CURRENT_SERVER_URL}/payments/success?orderId=${order._id}`,
+    fail_url: `${CURRENT_SERVER_URL}/payments/fail?orderId=${order._id}`,
+    cancel_url: `${CURRENT_SERVER_URL}/payments/cancel?orderId=${order._id}`,
+    ipn_url: `${CURRENT_SERVER_URL}/payments/ipn`,
 
     // Product / service info
     shipping_method: "Food Delivery",
@@ -60,15 +61,13 @@ export const successPayment = async (req, res) => {
     const { orderId } = req.query;
     const paymentData = req.body; // SSLCommerz sends payment details in POST body
 
-    if (!orderId)
-      return res.redirect("http://localhost:5173/payment-status?status=fail");
+    if (!orderId) return res.redirect(`${clientURL}/payment/fail/${orderId}`);
 
     const order = await Order.findById(orderId);
-    if (!order)
-      return res.redirect("http://localhost:5173/payment-status?status=fail");
+    if (!order) return res.redirect(`${clientURL}/payment/fail/404`);
+
     const user = await User.findById(order.userId);
-    if (!user)
-      return res.redirect("http://localhost:5173/payment-status?status=fail");
+    if (!user) return res.redirect(`${clientURL}/payment/fail/404`);
 
     // Extract payment details from SSLCommerz response
     const {
@@ -104,23 +103,25 @@ export const successPayment = async (req, res) => {
 
     // ✅ Update User role in Firebase
     try {
-      await admin.auth().setCustomUserClaims(user._id, { role: "foodie" });
-      console.log(`Firebase role updated for ${user.email}`);
+      if (user.role !== "foodie") {
+        await admin.auth().setCustomUserClaims(user._id, { role: "foodie" });
+        console.log(`Firebase role updated for ${user.email}`);
+      }
     } catch (firebaseError) {
       console.error("Firebase role update failed:", firebaseError);
     }
 
-    res.redirect("http://localhost:5173/payment-status?status=success");
+    res.redirect(`${clientURL}/payment/success/${orderId}`);
   } catch (error) {
     console.error(error);
-    res.redirect("http://localhost:5173/payment-status?status=fail");
+    res.redirect(`${clientURL}/payment/fail/500`);
   }
 };
 
 export const failPayment = async (req, res) => {
-  res.redirect("http://localhost:5173/payment-status?status=fail");
+  res.redirect(`${clientURL}/payment/fail/404`);
 };
 
 export const cancelPayment = async (req, res) => {
-  res.redirect("http://localhost:5173/payment-status?status=cancel");
+  res.redirect(`${clientURL}/payment/cancel`);
 };
