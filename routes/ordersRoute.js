@@ -17,6 +17,6 @@ router.get("/:orderId", getSingleOrder);
 router.patch("/:orderId", updateSingleOrder);
 router.delete("/:orderId", deleteSingleOrder);
 router.post("/filterOrders", getFilteredOrders);
-router.post("/", verifyFirebaseToken, verifyUser, createSingleOrder);
+router.post("/new", verifyFirebaseToken, verifyUser, createSingleOrder);
 
 export default router;
