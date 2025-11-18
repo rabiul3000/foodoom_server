@@ -1,6 +1,23 @@
 import Food from "../models/Food.js";
 import Order from "../models/Order.js"; // import your Order model
 
+export const getFilteredOrders = async (req, res) => {
+  const userId = req.body.userId;
+  const status = req.body.filterValue;
+
+  try {
+    if (status !== "all") {
+      let query = { userId };
+      query.$or = [{ orderStatus: status }, { paymentStatus: status }];
+      const orders = await Order.find(query);
+
+      return res.status(200).json({ orders });
+    }
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
 export const createSingleOrder = async (req, res) => {
   try {
     const userId = req.user.user_id; // Firebase UID (from verified token)
