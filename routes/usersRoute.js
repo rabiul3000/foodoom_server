@@ -13,7 +13,7 @@ const router = express.Router();
 
 router.get("/", getAllUsers);
 
-router.post("/", createSingleUser);
+router.post("/new", createSingleUser);
 router.get("/:id", getSingleUser);
 router.put("/:id", verifyFirebaseToken, updateSingleUser);
 router.put("/become_rider/:id", verifyFirebaseToken, beComeRiderFromUser);
