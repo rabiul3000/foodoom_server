@@ -1,6 +1,11 @@
 import Food from "../models/Food.js";
 import User from "../models/User.js";
 
+export const allRiderRequests = async (req, res) => {
+  const users = await User.find({ riderStatus: "pending" });
+  return res.status(200).json(users);
+};
+
 export const createSingleUser = async (req, res) => {
   const { email, id, name, photoURL } = req.body.userInfo;
   console.log(email, id, name, photoURL);
@@ -33,9 +38,9 @@ export const getAllUsers = async (req, res) => {
 };
 
 export const getSingleUser = async (req, res) => {
-  const foodId = req.params.id;
+  const userId = req.params.id;
   try {
-    const user = await User.findById(foodId);
+    const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
     return res.status(200).json(user);
   } catch (err) {
@@ -66,6 +71,40 @@ export const updateSingleUser = async (req, res) => {
   }
 };
 
+export const beComeChefFromUser = async (req, res) => {
+  const userData = req.body.userData;
+  const userId = req.user.user_id;
+
+  try {
+    const updatedUser = await User.findOneAndUpdate(
+      {
+        _id: userId,
+        role: { $in: ["user", "foodie"] },
+        riderStatus: { $nin: ["approved", "pending"] },
+        chefStatus: { $nin: ["approved", "pending"] },
+      },
+      {
+        ...userData,
+        chefStatus: "pending",
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    if (!updatedUser) {
+      const user = await User.findById(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      return res.status(400).json({ message: "Request already sent for chef" });
+    }
+
+    return res.status(200).json(updatedUser);
+  } catch (error) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 export const beComeRiderFromUser = async (req, res) => {
   const userData = req.body.userData;
   const userId = req.user.user_id;
@@ -89,7 +128,7 @@ export const beComeRiderFromUser = async (req, res) => {
       return res.status(400).json({ message: "Request already sent" });
     }
 
-    res.status(200).json(updatedUser);
+    return res.status(200).json(updatedUser);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

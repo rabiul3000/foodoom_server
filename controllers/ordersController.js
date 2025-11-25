@@ -1,5 +1,15 @@
+import admin from "../config/firebaseAdmin.js";
 import Food from "../models/Food.js";
 import Order from "../models/Order.js"; // import your Order model
+
+export const getAllOrdersForAdmin = async (req, res) => {
+  try {
+    const orders = await Order.find().sort({ createdAt: -1 });
+    return res.status(200).json(orders);
+  } catch (error) {
+    return res.status(404).json(error);
+  }
+};
 
 export const getFilteredOrders = async (req, res) => {
   const userId = req.body.userId;
@@ -73,11 +83,12 @@ export const createSingleOrder = async (req, res) => {
 
 export const getAllOrders = async (req, res) => {
   const userId = req.params.userId;
-  console.log(userId);
+  if (!userId) return;
   try {
     const orders = await Order.find({ userId }).sort({ createdAt: -1 });
     return res.status(200).json(orders);
   } catch (err) {
+    console.log(err);
     return res.status(500).json({ message: err.message });
   }
 };

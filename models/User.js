@@ -17,10 +17,23 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ["user", "foodie", "rider", "admin"],
+    enum: ["user", "foodie", "rider", "admin", "chef"],
     default: "user",
   },
   riderStatus: {
+    type: String,
+    enum: [
+      "pending",
+      "approved",
+      "rejected",
+      "suspended",
+      "banned",
+      "inactive",
+      "top",
+      "featured",
+    ],
+  },
+  chefStatus: {
     type: String,
     enum: [
       "pending",
