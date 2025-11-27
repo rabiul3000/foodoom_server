@@ -2,7 +2,17 @@ import Food from "../models/Food.js";
 import User from "../models/User.js";
 
 export const allRiderRequests = async (req, res) => {
-  const users = await User.find({ riderStatus: "pending" });
+  const users = await User.find();
+  return res.status(200).json(users);
+};
+export const allChefRequests = async (req, res) => {
+  const adminId = req.user.user_id;
+
+  const users = await User.find({
+    _id: { $ne: adminId },
+    chefStatus: { $in: ["pending", "approved"] },
+  });
+
   return res.status(200).json(users);
 };
 
@@ -11,12 +21,12 @@ export const createSingleUser = async (req, res) => {
   console.log(email, id, name, photoURL);
 
   try {
-    const isUser = await User.findOne({ _id: id });
+    const isUser = await User.findOne({ uid: id });
     if (isUser)
       return res.status(200).json({ user: isUser, message: "user exist" });
 
     const newUser = await User.create({
-      _id: id,
+      uid: id,
       email,
       name,
       photoURL,
@@ -40,7 +50,9 @@ export const getAllUsers = async (req, res) => {
 export const getSingleUser = async (req, res) => {
   const userId = req.params.id;
   try {
-    const user = await User.findById(userId);
+    const user = await User.findOne({
+      uid: userId,
+    });
     if (!user) return res.status(404).json({ message: "User not found" });
     return res.status(200).json(user);
   } catch (err) {
@@ -86,6 +98,7 @@ export const beComeChefFromUser = async (req, res) => {
       {
         ...userData,
         chefStatus: "pending",
+        chefRequestAt: Date.now(),
       },
       {
         new: true,
@@ -118,6 +131,7 @@ export const beComeRiderFromUser = async (req, res) => {
       {
         ...userData,
         riderStatus: "pending",
+        riderRequestAt: Date.now(),
       },
       { new: true, runValidators: true }
     );
@@ -140,6 +154,31 @@ export const deleteSingleUser = async (req, res) => {
     const food = await Food.findById(foodId);
     if (!food) return res.status(404).json({ message: "Food not found" });
     res.json(food);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const chefRequestAccept = async (req, res) => {
+  const userId = req.body.userId;
+  try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "user not found" });
+    user.chefStatus = "approved";
+    user.chefApprovedAt = Date.now();
+    const updatedUser = await user.save();
+    return res.status(200).json(updatedUser);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const chefRequestReject = async (req, res) => {
+  const userId = req.body.userId;
+  try {
+    const user = await user.findById(userId);
+    if (!user) return res.status(404).json({ message: "user not found" });
+    return res.status(200).json(user);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

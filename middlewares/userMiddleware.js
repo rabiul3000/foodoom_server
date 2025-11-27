@@ -13,6 +13,7 @@ export const verifyFirebaseToken = async (req, res, next) => {
   try {
     const decodedToken = await admin.auth().verifyIdToken(idToken);
     req.user = decodedToken; // Add user info to request
+
     next();
   } catch (error) {
     console.error("Token verification failed:", error);
@@ -21,17 +22,18 @@ export const verifyFirebaseToken = async (req, res, next) => {
 };
 
 export const verifyUser = async (req, res, next) => {
-  const _id = req.user.uid;
+  const uid = req.user.uid;
 
-  if (!_id) {
+  if (!uid) {
     return res.status(401).json({ message: "no user data found" });
   }
 
   try {
-    const user = await User.findById(_id);
+    const user = await User.findOne({ uid });
     if (!user) {
       return res.status(401).json({ message: "auth conflict" });
     }
+    req.user.user_id = user._id;
     next();
   } catch (error) {
     console.error("Token verification failed:", error);

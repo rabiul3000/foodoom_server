@@ -11,7 +11,7 @@ const cartItemSchema = new mongoose.Schema({
 
 const orderSchema = new mongoose.Schema(
   {
-    userId: { type: String, required: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     cartItems: [cartItemSchema],
     totalAmount: { type: Number, required: true },
     paymentStatus: {
@@ -24,43 +24,17 @@ const orderSchema = new mongoose.Schema(
       enum: ["pending", "confirmed", "delivered", "cancelled"],
       default: "pending",
     },
-    transactionId: {
-      type: String,
-      default: null,
-    },
-    bankTranId: {
-      type: String,
-      default: null,
-    },
-    validationId: {
-      type: String,
-      default: null,
-    },
-    paymentDate: {
-      type: String,
-      default: null,
-    },
-    cardIssuer: {
-      type: String,
-      default: null,
-    },
-    maskedCard: {
-      type: String,
-      default: null,
-    },
-    riskLevel: {
-      type: String,
-      default: null,
-    },
-    storeAmount: {
-      type: String,
-      default: null,
-    },
-    paymentMethod: { type: String, default: null },
+    transactionId: String,
+    bankTranId: String,
+    validationId: String,
+    paymentDate: String,
+    cardIssuer: String,
+    maskedCard: String,
+    riskLevel: String,
+    storeAmount: String,
+    paymentMethod: String,
   },
   { timestamps: true }
 );
 
-const Order = mongoose.model("order", orderSchema);
-
-export default Order;
+export default mongoose.models.Order || mongoose.model("Order", orderSchema);
