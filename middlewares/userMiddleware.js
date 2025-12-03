@@ -23,15 +23,15 @@ export const verifyFirebaseToken = async (req, res, next) => {
 
 export const verifyUser = async (req, res, next) => {
   const uid = req.user.uid;
-
   if (!uid) {
-    return res.status(401).json({ message: "no user data found" });
+    return res.status(401).json({ message: "no uid provided" });
   }
 
   try {
     const user = await User.findOne({ uid });
+
     if (!user) {
-      return res.status(401).json({ message: "auth conflict" });
+      return res.status(401).json({ message: "user not found" });
     }
     req.user.user_id = user._id;
     next();

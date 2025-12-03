@@ -8,7 +8,7 @@ import {
 
 const router = express.Router();
 
-router.post("/", paySingleOrder);
+router.post("/new", paySingleOrder);
 router.post("/success", successPayment);
 router.post("/fail", failPayment);
 router.post("/cancel", cancelPayment);
