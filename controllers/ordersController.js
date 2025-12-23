@@ -124,10 +124,20 @@ export const cancelOrderByAdmin = async (req, res) => {
 
 export const getAllOrdersForAdmin = async (req, res) => {
   try {
+    const pageNumber = parseInt(req.params.page_number) || 1;
+    const pageSize = 10;
+    const skipCount = (pageNumber - 1) * pageSize;
+
+    const totalOrders = await Order.countDocuments()
     const orders = await Order.find()
       .sort({ createdAt: -1 })
+      .skip(skipCount)
+      .limit(pageSize)
       .populate("userId");
-    return res.status(200).json(orders);
+
+    const totalPages = Math.ceil(totalOrders / pageSize);
+
+    return res.status(200).json({orders, totalOrders, totalPages, currentPage: pageNumber});
   } catch (error) {
     console.log(error);
     return res.status(404).json(error);

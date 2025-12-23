@@ -26,7 +26,7 @@ router.patch('/delivered_order',verifyFirebaseToken, verifyUser, deliverOrderByA
 router.patch('/cancel_order',verifyFirebaseToken, verifyUser, cancelOrderByAdmin)
 
 
-router.get("/all_orders_admin", getAllOrdersForAdmin);
+router.get("/all_orders_admin/:page_number", getAllOrdersForAdmin);
 router.get("/:userId", verifyFirebaseToken, verifyUser, getAllOrders);
 router.get("/:orderId", getSingleOrder);
 router.patch("/:orderId", updateSingleOrder);
