@@ -61,25 +61,23 @@ export const getSingleUser = async (req, res) => {
 };
 
 export const updateSingleUser = async (req, res) => {
-  const userData = req.body.userData;
-  const userId = req.user.user_id;
   try {
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { $set: { ...userData, riderStatus: "pending" } },
-      {
-        new: true,
-        runValidators: true,
-        context: "query",
-      }
-    );
+    const phoneNumber = req.body.phoneNumber;
+    const userId = req.user.user_id;
+    if (!phoneNumber) return;
+    if (!userId) return res.status(400).json({ message: "no userId" });
 
-    if (!updatedUser) {
+    const query = { uid: userId };
+    const options = { new: true, runValidators: true };
+    const update = { $set: { phone: phoneNumber } };
+
+    const user = await User.findOneAndUpdate(query, update, options);
+    if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    res.status(200).json(updatedUser);
+    return res.status(200).json({ user });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
